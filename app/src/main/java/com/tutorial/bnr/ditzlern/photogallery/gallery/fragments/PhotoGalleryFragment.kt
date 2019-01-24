@@ -9,11 +9,12 @@ import android.support.v4.app.Fragment
 import android.support.v4.content.ContextCompat
 import android.support.v7.widget.GridLayoutManager
 import android.support.v7.widget.RecyclerView
+import android.support.v7.widget.SearchView
 import android.util.Log
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import android.widget.ImageView
+import com.tutorial.bnr.ditzlern.photogallery.QueryPreferences
+
 import com.tutorial.bnr.ditzlern.photogallery.R
 import com.tutorial.bnr.ditzlern.photogallery.gallery.model.GalleryItem
 import com.tutorial.bnr.ditzlern.photogallery.networking.FlickrFetchr
@@ -31,7 +32,8 @@ class PhotoGalleryFragment : Fragment(){
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         retainInstance = true
-        FetchItemsTask().execute()
+        setHasOptionsMenu(true)
+        updateItems()
         val responseHandler = Handler()
         thumbnailDownloader =
                 ThumbnailDownloader<PhotoHolder>(
@@ -49,6 +51,55 @@ class PhotoGalleryFragment : Fragment(){
         thumbnailDownloader.quit()
         Log.i(TAG, "Background thread destroyed")
     }
+
+    override fun onCreateOptionsMenu(menu: Menu,
+                                     inflater: MenuInflater) {
+        super.onCreateOptionsMenu(menu, inflater)
+        inflater.inflate(R.menu.fragment_photo_gallery, menu)
+
+        val searchItem: MenuItem = menu.findItem(R.id.menu_item_search)
+        val searchView = searchItem.actionView as SearchView
+
+        searchView.apply {
+
+            setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+                override fun onQueryTextSubmit(queryText: String): Boolean {
+                    Log.d(TAG, "QueryTextSubmit: ${queryText}")
+                    QueryPreferences.setStoredQuery(context, queryText)
+                    updateItems()
+                    return true
+                }
+
+                override fun onQueryTextChange(queryText: String): Boolean {
+                    Log.d(TAG,"QueryTextChange: ${queryText}")
+                    return false
+                }
+            })
+
+            setOnSearchClickListener {
+                val query = QueryPreferences.getStoredQuery(requireContext())
+                searchView.setQuery(query, false)
+            }
+        }
+    }
+
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+
+        return when (item.itemId) {
+            R.id.menu_item_clear -> {
+                QueryPreferences.setStoredQuery(requireContext(), "")
+                updateItems()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
+    private fun updateItems() {
+        val query = QueryPreferences.getStoredQuery(requireContext())
+        FetchItemsTask(query).execute()
+    }
+
 
     override fun onCreateView(inflater: LayoutInflater,
                               container: ViewGroup?,
@@ -68,9 +119,15 @@ class PhotoGalleryFragment : Fragment(){
         thumbnailDownloader.clearQueue()
     }
 
-    private inner class FetchItemsTask() : AsyncTask<Unit, Unit, List<GalleryItem>>() {
+    private inner class FetchItemsTask(private val query: String = "") : AsyncTask<Unit, Unit, List<GalleryItem>>() {
         override fun doInBackground(vararg p0: Unit) : List<GalleryItem> {
-            return FlickrFetchr().fetchItems()
+
+
+            if (query.isEmpty()) {
+                return FlickrFetchr().fetchInterestingPhotos()
+            } else {
+                return FlickrFetchr().searchPhotos(query)
+            }
         }
 
         override fun onPostExecute(galleryItems: List<GalleryItem>) {
