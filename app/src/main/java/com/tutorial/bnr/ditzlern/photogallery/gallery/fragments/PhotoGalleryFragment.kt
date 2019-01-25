@@ -18,6 +18,7 @@ import android.widget.ImageView
 import com.tutorial.bnr.ditzlern.photogallery.QueryPreferences
 
 import com.tutorial.bnr.ditzlern.photogallery.R
+import com.tutorial.bnr.ditzlern.photogallery.gallery.activity.PhotoPageActivity
 import com.tutorial.bnr.ditzlern.photogallery.gallery.model.GalleryItem
 import com.tutorial.bnr.ditzlern.photogallery.networking.FlickrFetchr
 import com.tutorial.bnr.ditzlern.photogallery.networking.ThumbnailDownloader
@@ -166,7 +167,7 @@ class PhotoGalleryFragment : Fragment(){
         }
 
         override fun onClick(v: View) {
-            val intent = Intent(Intent.ACTION_VIEW, galleryItem.photoPageUri)
+            val intent = PhotoPageActivity.newIntent(requireContext(), galleryItem.photoPageUri)
             startActivity(intent)
         }
     }
