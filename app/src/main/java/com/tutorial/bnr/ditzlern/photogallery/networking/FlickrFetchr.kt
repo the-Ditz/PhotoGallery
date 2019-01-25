@@ -98,6 +98,7 @@ class FlickrFetchr {
             item.id = photoJsonObject.getString("id")
             item.title = photoJsonObject.getString("title")
             item.url = photoJsonObject.getString("url_s")
+            item.owner = photoJsonObject.getString("owner")
             items.add(item)
         }
     }

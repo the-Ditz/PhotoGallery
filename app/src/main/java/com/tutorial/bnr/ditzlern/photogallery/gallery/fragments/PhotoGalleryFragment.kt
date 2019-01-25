@@ -1,5 +1,6 @@
 package com.tutorial.bnr.ditzlern.photogallery.gallery.fragments
 
+import android.content.Intent
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.os.AsyncTask
@@ -7,6 +8,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.support.v4.app.Fragment
 import android.support.v4.content.ContextCompat
+import android.support.v4.content.ContextCompat.startActivity
 import android.support.v7.widget.GridLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.support.v7.widget.SearchView
@@ -146,13 +148,26 @@ class PhotoGalleryFragment : Fragment(){
         fun newInstance() = PhotoGalleryFragment()
     }
 
-    private class PhotoHolder(itemView: ImageView) : RecyclerView.ViewHolder(itemView) {
-
+    private inner class PhotoHolder(itemView: ImageView) : RecyclerView.ViewHolder(itemView), View.OnClickListener {
 
         private val itemImageView: ImageView = itemView
+        private lateinit var galleryItem: GalleryItem
+
+        init {
+            itemView.setOnClickListener(this)
+        }
 
         fun bindDrawable(drawable: Drawable) {
             itemImageView.setImageDrawable(drawable)
+        }
+
+        fun bindGalleryItem(item: GalleryItem) {
+            galleryItem = item
+        }
+
+        override fun onClick(v: View) {
+            val intent = Intent(Intent.ACTION_VIEW, galleryItem.photoPageUri)
+            startActivity(intent)
         }
     }
 
@@ -173,6 +188,7 @@ class PhotoGalleryFragment : Fragment(){
                                       position: Int) {
             val galleryItem = galleryItems[position]
 
+            holder.bindGalleryItem(galleryItem)
             val placeholder = ContextCompat.getDrawable(requireContext(), R.drawable.bill_up_close)
             holder.bindDrawable(placeholder!!)
             thumbnailDownloader.queueThumbnail(holder, galleryItem.url)
